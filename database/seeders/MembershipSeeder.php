@@ -68,7 +68,10 @@ class MembershipSeeder extends Seeder
         ];
 
         foreach ($memberships as $membership) {
-            Membership::create($membership);
+            Membership::firstOrCreate(
+                ['member_code' => $membership['member_code']],
+                $membership
+            );
         }
     }
 }

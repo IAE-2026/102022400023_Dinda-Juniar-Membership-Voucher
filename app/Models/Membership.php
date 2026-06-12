@@ -14,6 +14,7 @@ class Membership extends Model
         'phone',
         'membership_type',
         'status',
+        'receipt_number',
         'discount_percent',
         'registered_at',
         'expired_at',

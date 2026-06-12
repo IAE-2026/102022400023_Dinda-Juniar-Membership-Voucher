@@ -18,7 +18,7 @@ services:
       DB_PASSWORD: secret
       SESSION_DRIVER: file
       CACHE_STORE: file
-      IAE_API_KEYS: "102022400023,102022400039,102022400126"
+      IAE_API_KEYS: "102022400023"
       L5_SWAGGER_GENERATE_ALWAYS: "true"
     depends_on:
       mysql:

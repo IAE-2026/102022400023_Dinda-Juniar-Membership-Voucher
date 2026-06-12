@@ -4,20 +4,22 @@ namespace App\Http\Controllers;
 
 use OpenApi\Attributes as OA;
 
-#[OA\Info(
-    version: '1.0.0',
-    title: 'Service C - API Keanggotaan & Voucher',
-    description: 'Service Smart Parking untuk mengelola data keanggotaan dan voucher parkir. Dibuat oleh Dinda Juniar (102022400023).',
-    contact: new OA\Contact(name: 'Dinda Juniar', email: 'dinda@mail.com')
-)]
-#[OA\Server(url: '/', description: 'Local Server')]
-#[OA\SecurityScheme(
-    securityScheme: 'ApiKeyAuth',
-    type: 'apiKey',
-    in: 'header',
-    name: 'X-IAE-KEY',
-    description: 'NIM Mahasiswa sebagai API Key (contoh: 102022400023)'
-)]
+/**
+ * @OA\Info(
+ *     version="1.0.0",
+ *     title="Service C - API Keanggotaan & Voucher",
+ *     description="Service Smart Parking untuk mengelola data keanggotaan dan voucher parkir. Dibuat oleh Dinda Juniar (102022400023).",
+ *     @OA\Contact(name="Dinda Juniar", email="dinda@mail.com")
+ * )
+ * @OA\Server(url="/", description="Local Server")
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     description="JWT Bearer token untuk autentikasi"
+ * )
+ */
 #[OA\Schema(
     schema: 'Membership',
     properties: [

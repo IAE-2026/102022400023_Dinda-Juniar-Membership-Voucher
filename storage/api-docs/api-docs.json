@@ -2,19 +2,9 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Service C - API Keanggotaan & Voucher",
-        "description": "Service Smart Parking untuk mengelola data keanggotaan dan voucher parkir. Dibuat oleh Dinda Juniar (102022400023).",
-        "contact": {
-            "name": "Dinda Juniar",
-            "email": "dinda@mail.com"
-        },
+        "description": "Service Smart Parking untuk mengelola data keanggotaan dan voucher parkir.",
         "version": "1.0.0"
     },
-    "servers": [
-        {
-            "url": "/",
-            "description": "Local Server"
-        }
-    ],
     "paths": {
         "/api/v1/memberships": {
             "get": {
@@ -36,7 +26,7 @@
                 },
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "bearerAuth": []
                     }
                 ]
             },
@@ -99,7 +89,7 @@
                 },
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -136,179 +126,7 @@
                 },
                 "security": [
                     {
-                        "ApiKeyAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/memberships/{id}/record-usage": {
-            "post": {
-                "tags": [
-                    "Keanggotaan"
-                ],
-                "summary": "Mencatat riwayat penggunaan manfaat keanggotaan",
-                "operationId": "553d07c41d2b31b47472187db92db5b5",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Member code (contoh: MEM001)",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "MEM001"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "transaction_id": {
-                                        "type": "string",
-                                        "example": "TRX001"
-                                    },
-                                    "voucher_code": {
-                                        "type": "string",
-                                        "example": "WELCOME50"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Riwayat penggunaan berhasil dicatat"
-                    },
-                    "404": {
-                        "description": "Anggota tidak ditemukan"
-                    },
-                    "401": {
-                        "description": "Tidak terotorisasi"
-                    }
-                },
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/vouchers": {
-            "get": {
-                "tags": [
-                    "Voucher"
-                ],
-                "summary": "Melihat daftar seluruh voucher",
-                "operationId": "5e4c4903e29f39c51311fbd60882bfdd",
-                "responses": {
-                    "200": {
-                        "description": "Data berhasil diambil"
-                    },
-                    "401": {
-                        "description": "Tidak terotorisasi"
-                    },
-                    "403": {
-                        "description": "Akses ditolak"
-                    }
-                },
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/vouchers/validate": {
-            "post": {
-                "tags": [
-                    "Voucher"
-                ],
-                "summary": "Memvalidasi kode voucher",
-                "operationId": "37c930c069799a65008528c6b95ebbc7",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "code"
-                                ],
-                                "properties": {
-                                    "code": {
-                                        "type": "string",
-                                        "example": "WELCOME50"
-                                    },
-                                    "subtotal": {
-                                        "type": "number",
-                                        "example": 10000
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Voucher valid"
-                    },
-                    "400": {
-                        "description": "Voucher tidak valid"
-                    },
-                    "404": {
-                        "description": "Voucher tidak ditemukan"
-                    },
-                    "401": {
-                        "description": "Tidak terotorisasi"
-                    }
-                },
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/vouchers/{code}/use": {
-            "post": {
-                "tags": [
-                    "Voucher"
-                ],
-                "summary": "Menandai voucher sebagai sudah digunakan",
-                "operationId": "d5f333b120a97cd6117aa24626f3a92c",
-                "parameters": [
-                    {
-                        "name": "code",
-                        "in": "path",
-                        "description": "Kode voucher",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "WELCOME50"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Voucher berhasil ditandai sebagai sudah digunakan"
-                    },
-                    "400": {
-                        "description": "Voucher sudah digunakan"
-                    },
-                    "404": {
-                        "description": "Voucher tidak ditemukan"
-                    },
-                    "401": {
-                        "description": "Tidak terotorisasi"
-                    }
-                },
-                "security": [
-                    {
-                        "ApiKeyAuth": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -370,78 +188,6 @@
                     }
                 },
                 "type": "object"
-            },
-            "MembershipUsage": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "transaction_id": {
-                        "type": "string",
-                        "example": "TRX001"
-                    },
-                    "voucher_code": {
-                        "type": "string",
-                        "example": "WELCOME50"
-                    },
-                    "used_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "Voucher": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "code": {
-                        "type": "string",
-                        "example": "WELCOME50"
-                    },
-                    "description": {
-                        "type": "string",
-                        "example": "Diskon sambutan 50%"
-                    },
-                    "discount_type": {
-                        "type": "string",
-                        "example": "persen",
-                        "enum": [
-                            "persen",
-                            "nominal"
-                        ]
-                    },
-                    "discount_value": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 50
-                    },
-                    "max_discount": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 10000
-                    },
-                    "is_used": {
-                        "type": "boolean",
-                        "example": false
-                    },
-                    "valid_until": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            }
-        },
-        "securitySchemes": {
-            "ApiKeyAuth": {
-                "type": "apiKey",
-                "description": "NIM Mahasiswa sebagai API Key (contoh: 102022400023)",
-                "name": "X-IAE-KEY",
-                "in": "header"
             }
         }
     },
@@ -449,10 +195,6 @@
         {
             "name": "Keanggotaan",
             "description": "Keanggotaan"
-        },
-        {
-            "name": "Voucher",
-            "description": "Voucher"
         }
     ]
 }

@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    // SSO external service used by the application
+    'sso' => [
+        'base_url' => env('SSO_BASE_URL', 'https://iae-sso.virtualfri.id'),
+        // relative endpoints (will be concatenated with base_url in the service)
+        'token_endpoint' => env('SSO_TOKEN_ENDPOINT', '/api/v1/auth/token'),
+        'jwks_endpoint' => env('SSO_JWKS_ENDPOINT', '/api/v1/auth/jwks'),
+        'cache_prefix' => env('SSO_CACHE_PREFIX', 'sso'),
+        'jwks_cache_seconds' => env('SSO_JWKS_CACHE_SECONDS', 3600),
+        // Optional fallback JWKS JSON or single public key PEM in env
+        'jwks_fallback_json' => env('SSO_JWKS_JSON', null),
+        'public_key' => env('SSO_PUBLIC_KEY', null),
+    ],
+
 ];

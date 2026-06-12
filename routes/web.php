@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/test-member', function () {
+    return view('test-member');
+});
 
 Route::get('/health', function () {
     return response()->json([

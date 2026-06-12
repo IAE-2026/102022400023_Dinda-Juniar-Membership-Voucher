@@ -238,6 +238,24 @@ Service ini menyediakan akses **GraphQL** melalui Lighthouse. Playground tersedi
 │   │   │   └── MembershipController.php
 │   │   └── Middleware/
 │   │       └── VerifyApiKey.php
+
+## 🐇 RabbitMQ (Event Publishing)
+
+This service can publish events to RabbitMQ exchange `iae.central.exchange` whenever membership data is retrieved.
+
+1. Install AMQP client:
+
+```bash
+composer require php-amqplib/php-amqplib
+```
+
+2. Configure connection in `.env` (see `.env.example` for keys):
+
+- `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASS`, `RABBITMQ_EXCHANGE`
+
+3. Events published use routing key `order_created` (exchange `iae.central.exchange`).
+
+If the RabbitMQ library is not installed or the broker is unreachable, publishing is logged and does not affect API responses.
 │   └── Models/
 │       ├── Membership.php
 │       ├── MembershipUsage.php

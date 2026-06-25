@@ -5,6 +5,12 @@
         "description": "Service Smart Parking untuk mengelola data keanggotaan dan voucher parkir.",
         "version": "1.0.0"
     },
+    "servers": [
+        {
+            "url": "/",
+            "description": "Local Server"
+        }
+    ],
     "paths": {
         "/api/v1/memberships": {
             "get": {
@@ -26,7 +32,7 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "api_key": []
                     }
                 ]
             },
@@ -89,7 +95,7 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "api_key": []
                     }
                 ]
             }
@@ -126,7 +132,84 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vouchers/{code}": {
+            "get": {
+                "tags": [
+                    "Voucher"
+                ],
+                "summary": "Melihat detail voucher",
+                "operationId": "e35ffc2d970416bc1abd54e7ffc08451",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "description": "Kode voucher",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PARKIRHEMAT"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data berhasil diambil"
+                    },
+                    "404": {
+                        "description": "Voucher tidak ditemukan"
+                    },
+                    "401": {
+                        "description": "Tidak terotorisasi"
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vouchers/{code}/use": {
+            "patch": {
+                "tags": [
+                    "Voucher"
+                ],
+                "summary": "Menandai voucher sebagai sudah terpakai",
+                "operationId": "72a7cf4ecdeddf4dcf44a17693b07c62",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "description": "Kode voucher",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PARKIRHEMAT"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Voucher berhasil ditandai sebagai terpakai"
+                    },
+                    "404": {
+                        "description": "Voucher tidak ditemukan"
+                    },
+                    "400": {
+                        "description": "Voucher sudah terpakai"
+                    },
+                    "401": {
+                        "description": "Tidak terotorisasi"
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
                     }
                 ]
             }
@@ -137,6 +220,7 @@
             "Membership": {
                 "properties": {
                     "id": {
+                        "description": "Base controller.",
                         "type": "integer",
                         "example": 1
                     },
@@ -189,12 +273,24 @@
                 },
                 "type": "object"
             }
+        },
+        "securitySchemes": {
+            "api_key": {
+                "type": "apiKey",
+                "description": "API Key (masukkan NIM Anda) untuk otorisasi",
+                "name": "X-IAE-KEY",
+                "in": "header"
+            }
         }
     },
     "tags": [
         {
             "name": "Keanggotaan",
             "description": "Keanggotaan"
+        },
+        {
+            "name": "Voucher",
+            "description": "Voucher"
         }
     ]
 }

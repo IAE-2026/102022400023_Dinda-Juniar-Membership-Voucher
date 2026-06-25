@@ -17,6 +17,14 @@ use Illuminate\Support\Facades\Log;
     title: 'Service C - API Keanggotaan & Voucher',
     description: 'Service Smart Parking untuk mengelola data keanggotaan dan voucher parkir.',
 )]
+#[OA\Server(url: '/', description: 'Local Server')]
+#[OA\SecurityScheme(
+    securityScheme: 'api_key',
+    type: 'apiKey',
+    in: 'header',
+    name: 'X-IAE-KEY',
+    description: 'API Key (masukkan NIM Anda) untuk otorisasi',
+)]
 class MembershipController extends Controller
 {
     private const DISCOUNT_MAP = [
@@ -29,7 +37,7 @@ class MembershipController extends Controller
     #[OA\Get(
         path: '/api/v1/memberships',
         summary: 'Melihat daftar seluruh member',
-        security: [['bearerAuth' => []]],
+        security: [['api_key' => []]],
         tags: ['Keanggotaan'],
         responses: [
             new OA\Response(response: 200, description: 'Data berhasil diambil'),
@@ -88,7 +96,7 @@ class MembershipController extends Controller
     #[OA\Get(
         path: '/api/v1/memberships/{id}',
         summary: 'Mengecek detail dan status aktif seorang member',
-        security: [['bearerAuth' => []]],
+        security: [['api_key' => []]],
         tags: ['Keanggotaan'],
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, description: 'Member code (contoh: MEM001)', schema: new OA\Schema(type: 'string', example: 'MEM001')),
@@ -151,7 +159,7 @@ class MembershipController extends Controller
     #[OA\Post(
         path: '/api/v1/memberships',
         summary: 'Mendaftarkan member baru',
-        security: [['bearerAuth' => []]],
+        security: [['api_key' => []]],
         tags: ['Keanggotaan'],
         requestBody: new OA\RequestBody(
             required: true,
@@ -196,7 +204,7 @@ class MembershipController extends Controller
         }
 
         try {
-            $membership = DB::transaction(function () use ($name, $email, $phone, $membershipType, $token) {
+            $membership = DB::transaction(function () use ($name, $email, $phone, $membershipType) {
                 $lastMembership = Membership::orderByDesc('id')->first();
                 $nextNumber = $lastMembership ? ((int) substr($lastMembership->member_code, 3)) + 1 : 1;
                 $memberCode = 'MEM' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
@@ -204,7 +212,7 @@ class MembershipController extends Controller
                 $now = now();
                 $expiredAt = $now->copy()->addYear();
 
-                $membership = Membership::create([
+                return Membership::create([
                     'member_code' => $memberCode,
                     'name' => $name,
                     'email' => $email,
@@ -215,22 +223,20 @@ class MembershipController extends Controller
                     'registered_at' => $now,
                     'expired_at' => $expiredAt,
                 ]);
-
-                $auditService = new AuditSoapService();
-                $receiptNumber = $auditService->sendAuditLog($token, $membership->toArray());
-
-                if (empty($receiptNumber)) {
-                    throw new \Exception('Gagal melakukan audit SOAP: Tidak dapat memperoleh nomor resi.');
-                }
-
-                $membership->update([
-                    'receipt_number' => $receiptNumber
-                ]);
-
-                return $membership;
             });
         } catch (\Throwable $e) {
             return $this->errorResponse('Gagal mendaftarkan anggota: ' . $e->getMessage(), 500);
+        }
+
+        // SOAP Audit (non-blocking — jangan gagalkan pembuatan member)
+        try {
+            $auditService = new AuditSoapService();
+            $receiptNumber = $auditService->sendAuditLog($token, $membership->toArray());
+            if (!empty($receiptNumber)) {
+                $membership->update(['receipt_number' => $receiptNumber]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('SOAP Audit gagal (non-blocking): ' . $e->getMessage());
         }
 
         // ==========================================================
@@ -261,23 +267,30 @@ class MembershipController extends Controller
 
     private function successResponse(string $message, mixed $data, array $extraMeta = [], int $statusCode = 200): JsonResponse
     {
+        if ($statusCode === 201) {
+            return response()->json([
+                'message' => $message,
+                'data' => $data,
+            ], 201);
+        }
+
         return response()->json([
-            'status' => 'success',
-            'message' => $message,
             'data' => $data,
-            'meta' => array_merge([
-                'service_name' => 'Keanggotaan-Voucher-Service',
-                'api_version' => 'v1',
-            ], $extraMeta),
         ], $statusCode);
     }
 
     private function errorResponse(string $message, int $statusCode, mixed $errors = null): JsonResponse
     {
+        if ($statusCode === 404) {
+            return response()->json([
+                'error' => 'Not Found',
+                'message' => $message,
+            ], 404);
+        }
+
         return response()->json([
-            'status' => 'error',
+            'error' => 'Error',
             'message' => $message,
-            'errors' => $errors,
         ], $statusCode);
     }
 

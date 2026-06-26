@@ -17,6 +17,14 @@ use Illuminate\Support\Facades\Log;
     title: 'Service C - API Keanggotaan & Voucher',
     description: 'Service Smart Parking untuk mengelola data keanggotaan dan voucher parkir.',
 )]
+#[OA\Server(url: '/', description: 'Local Server')]
+#[OA\SecurityScheme(
+    securityScheme: 'api_key',
+    type: 'apiKey',
+    in: 'header',
+    name: 'X-IAE-KEY',
+    description: 'API Key (masukkan NIM Anda) untuk otorisasi',
+)]
 class MembershipController extends Controller
 {
     private const DISCOUNT_MAP = [
@@ -29,7 +37,7 @@ class MembershipController extends Controller
     #[OA\Get(
         path: '/api/v1/memberships',
         summary: 'Melihat daftar seluruh member',
-        security: [['bearerAuth' => []]],
+        security: [['api_key' => []]],
         tags: ['Keanggotaan'],
         responses: [
             new OA\Response(response: 200, description: 'Data berhasil diambil'),
@@ -59,7 +67,7 @@ class MembershipController extends Controller
 
         // attempt to publish event to RabbitMQ (non-blocking)
         try {
-            $publisher = new RabbitMQService(); // Diubah ke RabbitMQService
+            $publisher = new RabbitMQService();
             $publisher->publish('order_created', [
                 'type' => 'memberships_list',
                 'count' => $memberships->count(),
@@ -88,7 +96,7 @@ class MembershipController extends Controller
     #[OA\Get(
         path: '/api/v1/memberships/{id}',
         summary: 'Mengecek detail dan status aktif seorang member',
-        security: [['bearerAuth' => []]],
+        security: [['api_key' => []]],
         tags: ['Keanggotaan'],
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, description: 'Member code (contoh: MEM001)', schema: new OA\Schema(type: 'string', example: 'MEM001')),
@@ -108,7 +116,6 @@ class MembershipController extends Controller
             $authUser = $request->attributes->get('auth_user');
             if ($authUser && is_array($authUser)) {
                 $fallback = $this->buildMembershipFromSso($authUser);
-                // Only return if fallback member_code matches requested id (or if id is absent)
                 if (! empty($fallback['member_code']) && $fallback['member_code'] === $id) {
                     return $this->successResponse('Database tidak tersedia, mengembalikan data dari token SSO', $fallback, []);
                 }
@@ -123,7 +130,7 @@ class MembershipController extends Controller
 
         // publish event about membership retrieval (non-blocking)
         try {
-            $publisher = new RabbitMQService(); // Diubah ke RabbitMQService
+            $publisher = new RabbitMQService();
             $publisher->publish('order_created', [
                 'type' => 'membership_view',
                 'member_code' => $membership->member_code,
@@ -151,7 +158,7 @@ class MembershipController extends Controller
     #[OA\Post(
         path: '/api/v1/memberships',
         summary: 'Mendaftarkan member baru',
-        security: [['bearerAuth' => []]],
+        security: [['api_key' => []]],
         tags: ['Keanggotaan'],
         requestBody: new OA\RequestBody(
             required: true,
@@ -190,13 +197,11 @@ class MembershipController extends Controller
             );
         }
 
-        $token = $request->bearerToken() ?? $request->header('X-IAE-KEY');
-        if (empty($token)) {
-            return $this->errorResponse('Tidak terotorisasi: Token JWT tidak ditemukan', 401);
-        }
+        // Token untuk audit SOAP — ambil dari Bearer atau X-IAE-KEY (tidak blocking)
+        $token = $request->bearerToken() ?? $request->header('X-IAE-KEY') ?? '';
 
         try {
-            $membership = DB::transaction(function () use ($name, $email, $phone, $membershipType, $token) {
+            $membership = DB::transaction(function () use ($name, $email, $phone, $membershipType) {
                 $lastMembership = Membership::orderByDesc('id')->first();
                 $nextNumber = $lastMembership ? ((int) substr($lastMembership->member_code, 3)) + 1 : 1;
                 $memberCode = 'MEM' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
@@ -204,7 +209,7 @@ class MembershipController extends Controller
                 $now = now();
                 $expiredAt = $now->copy()->addYear();
 
-                $membership = Membership::create([
+                return Membership::create([
                     'member_code' => $memberCode,
                     'name' => $name,
                     'email' => $email,
@@ -215,22 +220,20 @@ class MembershipController extends Controller
                     'registered_at' => $now,
                     'expired_at' => $expiredAt,
                 ]);
-
-                $auditService = new AuditSoapService();
-                $receiptNumber = $auditService->sendAuditLog($token, $membership->toArray());
-
-                if (empty($receiptNumber)) {
-                    throw new \Exception('Gagal melakukan audit SOAP: Tidak dapat memperoleh nomor resi.');
-                }
-
-                $membership->update([
-                    'receipt_number' => $receiptNumber
-                ]);
-
-                return $membership;
             });
         } catch (\Throwable $e) {
             return $this->errorResponse('Gagal mendaftarkan anggota: ' . $e->getMessage(), 500);
+        }
+
+        // SOAP Audit (non-blocking — jangan gagalkan pembuatan member)
+        try {
+            $auditService = new AuditSoapService();
+            $receiptNumber = $auditService->sendAuditLog($token, $membership->toArray());
+            if (!empty($receiptNumber)) {
+                $membership->update(['receipt_number' => $receiptNumber]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('SOAP Audit gagal (non-blocking): ' . $e->getMessage());
         }
 
         // ==========================================================
@@ -239,7 +242,6 @@ class MembershipController extends Controller
         // ==========================================================
         try {
             $rabbitMQService = new RabbitMQService();
-            // Format payload RabbitMQ sesuai permintaan
             $payload = [
                 'event_name' => 'membership.created',
                 'service_name' => 'Keanggotaan-Voucher-Service',
@@ -248,7 +250,6 @@ class MembershipController extends Controller
                 'member' => $membership->toArray()
             ];
 
-            // PENTING: Sisipkan $token sebagai parameter ketiga!
             $rabbitMQService->publish('membership.created', $payload, $token);
         } catch (\Throwable $e) {
             // Kita bungkus try-catch agar jika RabbitMQ sedang mati, 

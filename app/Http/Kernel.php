@@ -56,7 +56,12 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
         // IAE project custom middleware
-        'sso.auth' => \App\Http\Middleware\ValidateSsoToken::class,
-        'sso.jwt' => \App\Http\Middleware\VerifyJwtBearerSSO::class,
+        'sso.auth'        => \App\Http\Middleware\ValidateSsoToken::class,
+        'sso.jwt'         => \App\Http\Middleware\VerifyJwtBearerSSO::class,
+
+        // Middleware dari revisi tugas 2
+        'iae.key'         => \App\Http\Middleware\IaeKeyAuth::class,
+        'auth.jwt'        => \App\Http\Middleware\JwksJwtAuth::class,
+        'soap.header.auth'=> \App\Http\Middleware\SoapHeaderAuth::class,
     ];
 }

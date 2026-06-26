@@ -180,10 +180,23 @@ class MembershipController extends Controller
     )]
     public function store(Request $request): JsonResponse
     {
+        // Try to get input from request (handles both form data and JSON with proper Content-Type)
         $name = $request->input('name');
         $email = $request->input('email');
         $phone = $request->input('phone');
         $membershipType = $request->input('membership_type');
+
+        // Fallback: if input() returned nothing, try json() or raw body decode
+        if (!$name && !$email && !$phone && !$membershipType) {
+            $body = $request->json()->all();
+            if (empty($body)) {
+                $body = json_decode($request->getContent(), true) ?? [];
+            }
+            $name = $body['name'] ?? null;
+            $email = $body['email'] ?? null;
+            $phone = $body['phone'] ?? null;
+            $membershipType = $body['membership_type'] ?? null;
+        }
 
         if (!$name || !$email || !$phone || !$membershipType) {
             return $this->errorResponse('name, email, phone, dan membership_type wajib diisi', 400);
@@ -262,30 +275,25 @@ class MembershipController extends Controller
 
     private function successResponse(string $message, mixed $data, array $extraMeta = [], int $statusCode = 200): JsonResponse
     {
-        if ($statusCode === 201) {
-            return response()->json([
-                'message' => $message,
-                'data' => $data,
-            ], 201);
-        }
+        $meta = array_merge([
+            'service_name' => 'Keanggotaan-Voucher-Service',
+            'api_version' => 'v1',
+        ], $extraMeta);
 
         return response()->json([
+            'status' => 'success',
+            'message' => $message,
             'data' => $data,
+            'meta' => $meta,
         ], $statusCode);
     }
 
     private function errorResponse(string $message, int $statusCode, mixed $errors = null): JsonResponse
     {
-        if ($statusCode === 404) {
-            return response()->json([
-                'error' => 'Not Found',
-                'message' => $message,
-            ], 404);
-        }
-
         return response()->json([
-            'error' => 'Error',
+            'status' => 'error',
             'message' => $message,
+            'errors' => $errors,
         ], $statusCode);
     }
 

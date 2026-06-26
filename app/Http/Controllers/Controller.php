@@ -5,20 +5,7 @@ namespace App\Http\Controllers;
 use OpenApi\Attributes as OA;
 
 /**
- * @OA\Info(
- *     version="1.0.0",
- *     title="Service C - API Keanggotaan & Voucher",
- *     description="Service Smart Parking untuk mengelola data keanggotaan dan voucher parkir. Dibuat oleh Dinda Juniar (102022400023).",
- *     @OA\Contact(name="Dinda Juniar", email="dinda@mail.com")
- * )
- * @OA\Server(url="/", description="Local Server")
- * @OA\SecurityScheme(
- *     securityScheme="bearerAuth",
- *     type="http",
- *     scheme="bearer",
- *     bearerFormat="JWT",
- *     description="JWT Bearer token untuk autentikasi"
- * )
+ * Base controller.
  */
 #[OA\Schema(
     schema: 'Membership',

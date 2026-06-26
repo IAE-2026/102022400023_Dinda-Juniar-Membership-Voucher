@@ -67,7 +67,7 @@ class MembershipController extends Controller
 
         // attempt to publish event to RabbitMQ (non-blocking)
         try {
-            $publisher = new RabbitMQService(); // Diubah ke RabbitMQService
+            $publisher = new RabbitMQService();
             $publisher->publish('order_created', [
                 'type' => 'memberships_list',
                 'count' => $memberships->count(),
@@ -116,7 +116,6 @@ class MembershipController extends Controller
             $authUser = $request->attributes->get('auth_user');
             if ($authUser && is_array($authUser)) {
                 $fallback = $this->buildMembershipFromSso($authUser);
-                // Only return if fallback member_code matches requested id (or if id is absent)
                 if (! empty($fallback['member_code']) && $fallback['member_code'] === $id) {
                     return $this->successResponse('Database tidak tersedia, mengembalikan data dari token SSO', $fallback, []);
                 }
@@ -131,7 +130,7 @@ class MembershipController extends Controller
 
         // publish event about membership retrieval (non-blocking)
         try {
-            $publisher = new RabbitMQService(); // Diubah ke RabbitMQService
+            $publisher = new RabbitMQService();
             $publisher->publish('order_created', [
                 'type' => 'membership_view',
                 'member_code' => $membership->member_code,
@@ -198,10 +197,8 @@ class MembershipController extends Controller
             );
         }
 
-        $token = $request->bearerToken() ?? $request->header('X-IAE-KEY');
-        if (empty($token)) {
-            return $this->errorResponse('Tidak terotorisasi: Token JWT tidak ditemukan', 401);
-        }
+        // Token untuk audit SOAP — ambil dari Bearer atau X-IAE-KEY (tidak blocking)
+        $token = $request->bearerToken() ?? $request->header('X-IAE-KEY') ?? '';
 
         try {
             $membership = DB::transaction(function () use ($name, $email, $phone, $membershipType) {
@@ -245,7 +242,6 @@ class MembershipController extends Controller
         // ==========================================================
         try {
             $rabbitMQService = new RabbitMQService();
-            // Format payload RabbitMQ sesuai permintaan
             $payload = [
                 'event_name' => 'membership.created',
                 'service_name' => 'Keanggotaan-Voucher-Service',
@@ -254,7 +250,6 @@ class MembershipController extends Controller
                 'member' => $membership->toArray()
             ];
 
-            // PENTING: Sisipkan $token sebagai parameter ketiga!
             $rabbitMQService->publish('membership.created', $payload, $token);
         } catch (\Throwable $e) {
             // Kita bungkus try-catch agar jika RabbitMQ sedang mati, 

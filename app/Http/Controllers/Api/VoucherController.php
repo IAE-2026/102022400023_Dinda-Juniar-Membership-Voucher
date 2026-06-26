@@ -46,28 +46,20 @@ class VoucherController extends Controller
 
         if (!$voucher) {
             return response()->json([
-                'status'  => 'error',
+                'error'   => 'Not Found',
                 'message' => 'Voucher not found',
-                'errors'  => null,
             ], 404);
         }
 
         if ($voucher->is_used) {
             return response()->json([
-                'status'  => 'error',
+                'error'   => 'Bad Request',
                 'message' => 'Voucher has already been used',
-                'errors'  => null,
             ], 400);
         }
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Data berhasil diambil',
-            'data'   => $voucher,
-            'meta'   => [
-                'service_name' => 'Keanggotaan-Voucher-Service',
-                'api_version' => 'v1',
-            ],
+            'data' => $voucher,
         ]);
     }
 
@@ -92,30 +84,23 @@ class VoucherController extends Controller
 
         if (!$voucher) {
             return response()->json([
-                'status'  => 'error',
+                'error'   => 'Not Found',
                 'message' => 'Voucher not found',
-                'errors'  => null,
             ], 404);
         }
 
         if ($voucher->is_used) {
             return response()->json([
-                'status'  => 'error',
+                'error'   => 'Bad Request',
                 'message' => 'Voucher already marked as used',
-                'errors'  => null,
             ], 400);
         }
 
         $voucher->update(['is_used' => true]);
 
         return response()->json([
-            'status'  => 'success',
+            'data' => $voucher,
             'message' => 'Voucher successfully marked as used',
-            'data'    => $voucher,
-            'meta'    => [
-                'service_name' => 'Keanggotaan-Voucher-Service',
-                'api_version' => 'v1',
-            ],
         ]);
     }
 }

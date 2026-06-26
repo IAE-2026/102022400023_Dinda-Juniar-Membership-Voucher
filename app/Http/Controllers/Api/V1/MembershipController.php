@@ -262,23 +262,30 @@ class MembershipController extends Controller
 
     private function successResponse(string $message, mixed $data, array $extraMeta = [], int $statusCode = 200): JsonResponse
     {
+        if ($statusCode === 201) {
+            return response()->json([
+                'message' => $message,
+                'data' => $data,
+            ], 201);
+        }
+
         return response()->json([
-            'status' => 'success',
-            'message' => $message,
             'data' => $data,
-            'meta' => array_merge([
-                'service_name' => 'Keanggotaan-Voucher-Service',
-                'api_version' => 'v1',
-            ], $extraMeta),
         ], $statusCode);
     }
 
     private function errorResponse(string $message, int $statusCode, mixed $errors = null): JsonResponse
     {
+        if ($statusCode === 404) {
+            return response()->json([
+                'error' => 'Not Found',
+                'message' => $message,
+            ], 404);
+        }
+
         return response()->json([
-            'status' => 'error',
+            'error' => 'Error',
             'message' => $message,
-            'errors' => $errors,
         ], $statusCode);
     }
 
